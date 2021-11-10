@@ -1,4 +1,4 @@
-data_path = '/H1/BabesiaScRNASeq'
+data_path = './data/tsv_files'
 
 species_keys = [
     'bbig',
