@@ -1,4 +1,7 @@
-data_path = './data/tsv_files'
+import os
+
+data_path = os.environ.get('BSCAPP_DATA_PATH')
+data_path = './data/tsv_files' if data_path is None else data_path
 
 species_keys = [
     'bbig',
