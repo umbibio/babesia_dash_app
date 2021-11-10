@@ -22,8 +22,9 @@ def select(species, table, cols=None, offset=None, nrows=None, force_read=False,
         else:
             # print(f'+++ start fetching {table_filename} ... using cache ...')
             pass
-        
-        df = tables_cache[table_filename].iloc[offset:offset+nrows]
+
+        end = nrows if offset is None else (None if nrows is None else offset+nrows)
+        df = tables_cache[table_filename].iloc[offset:end]
 
     for column, value in kvargs.items():
         df = df.loc[df[column] == value]
