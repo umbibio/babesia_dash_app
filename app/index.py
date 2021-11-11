@@ -14,6 +14,7 @@ pages = [
     {'title': 'Home', 'app': 'home', 'href': f'{url_base_pathname}'},
     {'title': 'Expression', 'app': 'expression', 'href': f'{url_base_pathname}expression'},
     {'title': 'Pseudo Time', 'app': 'pstime', 'href': f'{url_base_pathname}pstime'},
+    {'title': 'Network', 'app': 'network', 'href': f'{url_base_pathname}network'},
 ]
 
 
