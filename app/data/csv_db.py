@@ -27,7 +27,10 @@ def select(species, table, cols=None, offset=None, nrows=None, force_read=False,
         df = tables_cache[table_filename].iloc[offset:end]
 
     for column, value in kvargs.items():
-        df = df.loc[df[column] == value]
+        if type(value) == list:
+            df = df.loc[df[column].isin(value)]
+        else:
+            df = df.loc[df[column] == value]
 
     if cols is not None:
         df = df.loc[:, cols]
