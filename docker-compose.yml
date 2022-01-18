@@ -10,8 +10,8 @@ services:
     image: 'mariadb:10-local'
     restart: unless-stopped
     volumes:
-      - '/home/argenis/dash_projects/babesia/app/data/tsv_files:/app/data/tsv_files'
-      - '/home/argenis/dash_projects/babesia/app/data/initdb.d:/docker-entrypoint-initdb.d'
+      - './app/data/tsv_files:/app/data/tsv_files'
+      - './app/data/initdb.d:/docker-entrypoint-initdb.d'
     ports:
       - '3306:3306'
     environment:
@@ -29,7 +29,7 @@ services:
     ports:
       - '8052:8050'
     volumes:
-      - '/home/argenis/dash_projects/babesia/app:/app'
+      - './app:/app'
     environment:
       MARIADB_HOST: db
       MARIADB_USER: babesiasc_dash_user
