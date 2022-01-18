@@ -30,11 +30,6 @@ conn = DBPool()
 atexit.register(conn.close)
 
 
-# TODO: Figure a way to make table joins. Maybe a new, separate method would suffice
-# Here's something to start with
-def join(species, left, right, ):
-    pass
-
 def select(species:     str,
            table:       str,
            cols:        List[str]=[],
