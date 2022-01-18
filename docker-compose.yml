@@ -1,0 +1,37 @@
+version: '3'
+services:
+  db:
+    # we need to use a local version of the docker image
+    # that fixes a version issue with python connector and 
+    # extra settings that we need
+    build: 
+      context: ./db
+      dockerfile: Dockerfile
+    image: 'mariadb:10-local'
+    restart: unless-stopped
+    volumes:
+      - '/home/argenis/dash_projects/babesia/app/data/tsv_files:/app/data/tsv_files'
+      - '/home/argenis/dash_projects/babesia/app/data/initdb.d:/docker-entrypoint-initdb.d'
+    ports:
+      - '3306:3306'
+    environment:
+      MARIADB_USER: babesiasc_dash_user
+      MARIADB_PASSWORD: CHOOSE_PASSWORD
+      MYSQL_ROOT_PASSWORD: CHOOSE_ROOT_PASSWORD
+      MARIADB_ROOT_HOST: localhost
+      MARIADB_DATABASE: babesiasc_dash_db
+
+  app:
+    image: 'python:3.9.7-slim'
+    restart: unless-stopped
+    entrypoint: /app/entrypoint.sh
+    command: /app/run_server.sh
+    ports:
+      - '8052:8050'
+    volumes:
+      - '/home/argenis/dash_projects/babesia/app:/app'
+    environment:
+      MARIADB_HOST: db
+      MARIADB_USER: babesiasc_dash_user
+      MARIADB_PASSWORD: CHOOSE_PASSWORD
+      MARIADB_DATABASE: babesiasc_dash_db
