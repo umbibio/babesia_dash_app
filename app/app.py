@@ -24,6 +24,7 @@ app = dash.Dash(
     __name__,
     external_stylesheets=[getattr(dbc.themes, theme.upper()), dbc.icons.BOOTSTRAP],
     url_base_pathname=url_base_pathname,
-    suppress_callback_exceptions=True)
+    suppress_callback_exceptions=True,
+    title='Babesia Single Cell Atlas', update_title='Loading...')
 
 server = app.server

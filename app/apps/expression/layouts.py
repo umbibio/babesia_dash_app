@@ -1,6 +1,8 @@
 from dash import dcc
 from dash import html
 
+from plotly.colors import sample_colorscale, get_colorscale
+
 import dash_bootstrap_components as dbc
 
 from data import species_names, species_keys
@@ -29,13 +31,16 @@ menu = [
     html.Br(),
     html.Div(id='gene-dropdown-container', children=[
         dbc.Label("Gene", html_for='species-dropdown'),
-        dcc.Dropdown(id='gene-dropdown', options=[]),
+        dcc.Dropdown(id='gene-dropdown', options=[], placeholder='Search...'),
     ], style={'display': 'none'}),
 ]
 
 
 body = [
     html.H3('Expression'),
-    dcc.Graph(id='expression-graph')
+    dbc.Spinner([ dcc.Graph(
+        id='expression-graph', 
+        figure={'layout': { 'height': 700 } },
+    )], type='border', fullscreen=False, color='primary', delay_hide=100, ),
 ]
 

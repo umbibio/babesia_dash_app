@@ -51,7 +51,7 @@ def update_2d3d_visibility(dimred):
     )
 def draw_expression_plot(species, gene_id, dimred, pca_nd):
 
-    species_triggered = ctx.triggered and ctx.triggered[0]['prop_id'].split('.')[0] == 'species-dropdown'
+    species_triggered = ctx.triggered and ctx.triggered[0]['prop_id'] == 'species-dropdown.value'
     
     params = dict()
     fig = go.Figure()
@@ -65,36 +65,39 @@ def draw_expression_plot(species, gene_id, dimred, pca_nd):
         params.update(dict(mode='markers'))
         marker_dict = dict(
             color='rgba(0., 0., 0., 0.)',
-            line=dict(width=1.2, color=sample_colorscale('Blues', [1.])[0].replace('(', 'a(').replace(')', ', 0.2)')),)
+            line=dict(width=1.2, color='rgba(0.83, 0.83, 0.83, 0.6)'),
+            # line=dict(width=1.2, color=sample_colorscale('Blues', [1.])[0].replace('(', 'a(').replace(')', ', 0.2)')),
+        )
         if gene_id is not None and not species_triggered:
             expression = db.select(
                 species=species,
                 table='expr_all_genes',
                 cols=['GeneID', 'Sample', 'expr'],
-                GeneID=gene_id)
+                where=dict(GeneID=gene_id))
 
             df = df.merge(expression)
 
             expr_colorscale = get_colorscale('Blues')
 
             values = df['expr'] / df['expr'].max()
+            values = values.fillna(0.)
             marker_expr_colors = sample_colorscale(expr_colorscale, values)
-            marker_expr_colors = [c.replace('(', 'a(').replace(')', f', {v})') for c, v in zip(marker_expr_colors, values)]
+            marker_expr_colors_alpha = [c.replace('(', 'a(').replace(')', f', {v})') for c, v in zip(marker_expr_colors, values)]
 
-            expr_colorscale = [[s, c.replace('(', 'a(').replace(')', f', {s})')] for s, c in expr_colorscale]
+            expr_colorscale_alpha = [[s, c.replace('(', 'a(').replace(')', f', {s})')] for s, c in expr_colorscale]
 
-            marker_line_color = sample_colorscale('Blues', [1.])[0].replace('(', 'a(').replace(')', ', 0.1)')
+            marker_line_color_alpha = sample_colorscale('Blues', [1.])[0].replace('(', 'a(').replace(')', ', 0.1)')
             marker_dict = dict(
-                color=marker_expr_colors,
+                color=marker_expr_colors_alpha,
                 cmin=df['expr'].min(),
                 cmax=df['expr'].max(),
-                line=dict(width=1.2, color=marker_line_color),
-                colorscale=expr_colorscale,
+                # line=dict(width=1.2, color=marker_line_color_alpha),
+                line=dict(width=1.2, color='rgba(0.83, 0.83, 0.83, 0.6)'),
+                colorscale=expr_colorscale_alpha,
                 colorbar=dict(
                     title='Expression'
                 ),
             )
-        params.update(dict(marker=marker_dict))
 
         axes_titles = dict()
         if dimred == 'PCA':
@@ -110,6 +113,21 @@ def draw_expression_plot(species, gene_id, dimred, pca_nd):
                         yaxis=dict(title='PC_2'),
                         zaxis=dict(title='PC_3'),
                     )))
+                if gene_id is not None and not species_triggered:
+                    marker_dict = dict(
+                        color=marker_expr_colors_alpha,
+                        size=3,
+                        line=dict(width=1.2, color='rgba(1.0, 1.0, 1.0, 0.2)'),
+                        # line=dict(width=1.2, color='rgba(0.83, 0.83, 0.83, 0.6)'),
+                        # line=dict(width=1., color=sample_colorscale('Blues', [1.])[0].replace('(', 'a(').replace(')', ', 0.4)')),
+                    )
+                else:
+                    marker_dict = dict(
+                        color='rgba(0., 0., 0., 0.)',
+                        size=3,
+                        line=dict(width=1.2, color='rgba(1.0, 1.0, 1.0, 0.5)'),
+                        # line=dict(width=1., color=sample_colorscale('Blues', [1.])[0].replace('(', 'a(').replace(')', ', 0.5)')),
+                    )
             else:
                 axes_titles.update(dict( xaxis_title = 'PC_1', yaxis_title = 'PC_2', ))
 
@@ -120,6 +138,7 @@ def draw_expression_plot(species, gene_id, dimred, pca_nd):
         else:
             x = y = None
 
+        params.update(dict(marker=marker_dict))
         params.update(dict(x=x, y=y))
 
         trace = scatter_function(**params)

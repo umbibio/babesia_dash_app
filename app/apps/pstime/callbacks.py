@@ -1,146 +1,140 @@
+from datetime import datetime
+
+import pandas as pd
 from dash.exceptions import PreventUpdate
 
+from dash import callback_context as ctx
 from dash.dependencies import Input, Output, State, MATCH
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.colors import sample_colorscale, get_colorscale
 
 from app import app, db
+from apps.pstime.common import species_data, make_sc_plot
 
+
+# app.clientside_callback(
+#     """
+#     function(data, layout) {
+#         return {
+#             'data': data,
+#             'layout': layout
+#         }
+#     }
+#     """,
+#     Output({'type': 'pstime-expr-graph', 'key': MATCH}, 'figure'),
+#     Input({'type': 'pstime-expr-graph-figure-data', 'key': MATCH}, 'data'),
+#     Input({'type': 'pstime-expr-graph-figure-layout', 'key': MATCH}, 'data'),
+# )
 
 @app.callback(
+    # Output({'type': 'pstime-expr-graph-figure-data', 'key': MATCH}, 'data'),
+    # Output({'type': 'pstime-expr-graph-figure-layout', 'key': MATCH}, 'data'),
     Output({'type': 'pstime-expr-graph', 'key': MATCH}, 'figure'),
-    Output({'type': 'pstime-expr-graph', 'key': MATCH}, 'style'),
     Input('gene-dropdown', 'value'),
     State({'type': 'pstime-expr-graph', 'key': MATCH}, 'id'),
-    State({'type': 'pstime-expr-graph', 'key': MATCH}, 'style'),)
-def update_expression_plots(gene_id, id, style):
+    # State({'type': 'mata-data-orth-genes', 'key': MATCH}, 'data'),
+    )
+def update_expression_plots(gene_id, id):
     species = id['key']
 
-    fig = go.Figure()
+    if ctx.triggered and ctx.triggered[0]['prop_id'] == 'gene-dropdown.value':
 
-    if species:
-        style = {'display': 'block'}
-        df = db.select(
-            species=species,
-            table='mata_data_orth_genes')
-
-        unique_phases = df['phase'].sort_values().unique()
-        phases_color_sequence = sample_colorscale('Rainbow', len(unique_phases))
-        phases_color_sequence = [c.replace('(', 'a(').replace(')', ', 0.2)') for c in phases_color_sequence]
-
-        for phase, color in zip(unique_phases, phases_color_sequence):
-            x, y = df.loc[df['phase'] == phase, ['PC_1', 'PC_2']].values.T
-            fig.add_trace(go.Scatter(
-                x=x,
-                y=y,
-                mode='markers',
-                marker=dict(
-                    color=color if not gene_id else 'rgba(0., 0., 0., 0.)',
-                    line=dict(width=0.8, color=color),
-                ),
-                name=phase,
-                legendgroup="phases_group",
-                legendgrouptitle_text="Phases",
-            ))
-
-        x, y = df.loc[df['cell.ord']-1, ['sc1', 'sc2']].values.T
-        fig.add_trace(go.Scatter(
-            x=x,
-            y=y,
-            mode='lines',
-            line=dict(color='Black', width=1),
-            name='Timeline',
-            legendgroup="timeline_group",
-            legendgrouptitle_text="Timeline",
-        ))
-
-        x, y = df.loc[df['adj.time'] == df['adj.time'].min(), ['sc1', 'sc2']].values.T
-        fig.add_trace(go.Scatter(
-            x=x,
-            y=y,
-            mode='markers',
-            marker=dict(color='Black', size=20),
-            opacity=0.8,
-            name='Time Start',
-            legendgroup="timeline_group",
-            legendgrouptitle_text="Timeline",
-        ))
-
+        fig = make_sc_plot(species, phase_visible='legendonly' if gene_id else True)
+    
         if gene_id:
-            expression = db.select(
-                species=species,
-                table='expr_orth_genes',
-                cols=['GeneID', 'Sample', 'expr'],
-                GeneID=gene_id)
+            # fig.update_traces(marker=dict(color='rgba(0,0,0,0)'), selector=dict(legendgrouptitle_text="Phases"))
 
-            df = df.merge(expression)
+            # df = pd.DataFrame(species_data[species])
+            # df = df.merge(db.select(
+            #     species=species,
+            #     table='expr_orth_genes',
+            #     cols=['Sample', 'expr'],
+            #     where=dict(GeneID=gene_id),
+            # ))
+            # I forgot to include an index for the `Sample` column, which makes the following query too slow.
+            # this will get fixed on next database container creation. Will need to test how fast gets compared to the method above
+            df = db.select(
+                species=species,
+                table='mata_data_orth_genes',
+                right_table='expr_orth_genes',
+                right_cols=['expr'],
+                right_on='Sample',
+                right_where=dict(GeneID=gene_id),
+            )
 
             expr_colorscale = get_colorscale('Blues')
+            expr_colorscale_alpha = [[s, c.replace('(', 'a(').replace(')', f', {s/2})')] for s, c in expr_colorscale]
+            expr_colorscale_const_alpha = [[s, c.replace('(', 'a(').replace(')', f', 0.1)')] for s, c in expr_colorscale]
 
             values = df['expr'] / df['expr'].max()
             marker_expr_colors = sample_colorscale(expr_colorscale, values)
-            marker_expr_colors = [c.replace('(', 'a(').replace(')', f', {v/2})') for c, v in zip(marker_expr_colors, values)]
+            marker_expr_colors_alpha = [c.replace('(', 'a(').replace(')', f', {v/2})') for c, v in zip(marker_expr_colors, values)]
 
-            expr_colorscale = [[s, c.replace('(', 'a(').replace(')', f', {s/2})')] for s, c in expr_colorscale]
 
+
+            unique_phases = df['phase'].sort_values().unique()
             colorbar_height_px = 250 - len(unique_phases) * 20
             fig.add_trace(go.Scatter(
-                x=df['PC_1'],
+                x=-df['PC_1'],
                 y=df['PC_2'],
                 mode='markers',
                 marker=dict(
-                    color=marker_expr_colors,
+                    color=marker_expr_colors_alpha,
                     cmin=df['expr'].min(),
                     cmax=df['expr'].max(),
-                    line=dict(width=0., color='rgba(0., 0., 0., 0.)'),
+                    line=dict(width=1.2, color='rgba(0.66, 0.66, 0.66, 0.2)'),
+                    # line=dict(width=1., color='rgba(0., 0., 0., 0.1)'),
+                    # line=dict(width=1., color=expr_colorscale_const_alpha[6][1]),
                     colorbar=dict(
                         title="Counts",
                         len=colorbar_height_px,
                         lenmode='pixels',
                         x=1.1,
-                        y=0.,
+                        y=-0.1,
                         yanchor='bottom',
                     ),
-                    colorscale=expr_colorscale,
+                    colorscale=expr_colorscale_alpha,
                 ),
                 name='',
                 legendgroup="expression_group",
                 legendgrouptitle_text="Expression",
             ))
-        
+    else:
+        raise PreventUpdate
+        # fig = go.Figure(layout={ 'xaxis': {'title': 'PC_1'}, 'yaxis': {'title': 'PC_2', 'scaleanchor': 'x' }, 'height': 450, })
 
-
-    fig.update_layout(
-        { 'yaxis': { 'scaleanchor': 'x' }, 'height': 500, },
-        xaxis_title = 'PC_1',
-        yaxis_title = 'PC_2',
-    )
-
-    return fig, style
+    return fig
+    # return fig.data, fig.layout
 
 
 @app.callback(
     Output({'type': 'pstime-expr-time-curve', 'key': MATCH}, 'figure'),
-    Output({'type': 'pstime-expr-time-curve', 'key': MATCH}, 'style'),
     Input('gene-dropdown', 'value'),
     State({'type': 'pstime-expr-time-curve', 'key': MATCH}, 'id'), )
 def update_time_curve_plots(gene_id, id):
     species = id['key']
 
-    fig = go.Figure()
+    fig = go.Figure(layout={'height': 450, "xaxis": { "visible": False }, "yaxis": { "visible": False }, 'margin': {'l':20, 'r':20, 't':60, 'b':60}})
 
     if species and gene_id:
-        style = {'display': 'block'}
+        # df = pd.DataFrame(species_data[species])
+        # df = df.merge(db.select(
+        #     species=species,
+        #     table='expr_orth_genes',
+        #     cols=['Sample', 'expr'],
+        #     where=dict(GeneID=gene_id),
+        # ))
+        # I forgot to include an index for the `Sample` column, which makes the following query too slow.
+        # this will get fixed on next database container creation. Will need to test how fast gets compared to the method above
         df = db.select(
             species=species,
-            table='mata_data_orth_genes')
-
-        expression = db.select(
-            species=species,
-            table='expr_orth_genes',
-            cols=['GeneID', 'Sample', 'expr'],
-            GeneID=gene_id)
+            table='mata_data_orth_genes',
+            right_table='expr_orth_genes',
+            right_cols=['expr'],
+            right_on='Sample',
+            right_where=dict(GeneID=gene_id),
+        )
 
         marker_color = '#2a3f5f'.strip('#')
         # marker_color = px.colors.qualitative.Plotly[0].strip('#')
@@ -148,7 +142,6 @@ def update_time_curve_plots(gene_id, id):
         marker_rgba = marker_rgb + (0.2,)
         line_rgba = marker_rgb + (0.4,)
 
-        df = df.merge(expression)
         fig.add_trace(go.Scatter(
             x=df['adj.time'],
             y=df['expr'],
@@ -164,20 +157,26 @@ def update_time_curve_plots(gene_id, id):
             species=species,
             table='spline_fit_orth_genes',
             cols=['GeneID', 't', 'expr', 'lb', 'ub'],
-            GeneID=gene_id)
+            where=dict(GeneID=gene_id))
 
+        # print(df.columns)
         fig.add_trace( go.Scatter(x=df['t'], y=df['expr'], mode='lines', name='Fit'))
         fig.add_trace( go.Scatter(x=df['t'], y=df['ub'], mode='lines', line=dict(color='black', dash='dash'), name='High'))
         fig.add_trace( go.Scatter(x=df['t'], y=df['lb'], mode='lines', line=dict(color='black', dash='dash'), name='Low'))
+        fig.update_layout({ "xaxis": { "visible": True }, "yaxis": { "visible": True }, })
+        fig.update_layout( showlegend=False, xaxis_title = 'Time', yaxis_title = 'Expression', )
     else:
-        style = {'display': 'none'}
+        fig.update_layout({"annotations": [
+            {
+                "text": "Select a gene to see expression profile.",
+                "xref": "paper",
+                "yref": "paper",
+                "showarrow": False,
+                "font": {
+                    "size": 16
+                }
+            }
+        ]})
 
-    fig.update_layout(
-        {'height': 500},
-        showlegend=False,
-        xaxis_title = 'Time',
-        yaxis_title = 'Expression',
-    )
-
-    return fig, style
+    return fig
 

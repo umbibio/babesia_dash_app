@@ -36,7 +36,7 @@ app.layout = dbc.Container(
             dbc.Row(dbc.Col(id='left-menu')),
         ], width=2),
         dbc.Col([
-            dbc.Row(dbc.Col(nav), className="p-2"),
+            dbc.Row(dbc.Col(nav), class_name="p-2"),
             dbc.Row(dbc.Col(id='page-content')),
         ], width=10),
     ])
