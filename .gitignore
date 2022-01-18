@@ -2,3 +2,4 @@ __pycache__
 *.tsv
 *.sql
 secrets.sh
+secrets.env
