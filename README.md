@@ -10,7 +10,7 @@ You can find a live version [here](https://umbibio.math.umb.edu/babesiasc/)
 This should work on a linux based system with docker and docker-compose installed.
 - Clone the repository
 - Modify `docker-compose.yml` file to update the passwords
-- Download the tsv data files from [this link](https://umbibio.math.umb.edu/data/babesia/tsv_files.tar.gz)
+- Download the tsv data files from [this link](https://umbibio.math.umb.edu/data/babesia/tsv_files.tar.gz) or from the [releases](https://github.com/umbibio/babesia_dash_app/releases) section
     - Extract tsv files and place them in the `./app/data/tsv_files` folder.
 - Prepare and start the database container. This step may take several minutes to load the data into the database.
     - `$ docker-compose up db`
