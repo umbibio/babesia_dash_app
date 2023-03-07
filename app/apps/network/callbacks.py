@@ -98,6 +98,9 @@ def update_graph(selected_rows, species, data, min_node_size_label_filter):
     State('network-nodes-info', 'data'),
     Input('selected-network-nodes', 'data'), )
 def update_selected_nodes_table(node_info_data, selected_nodes):
+    if not node_info_data:
+        raise PreventUpdate
+
     df = pd.DataFrame(node_info_data).iloc[selected_nodes]
     if len(df) > 0:
         sel_header = [
@@ -141,35 +144,71 @@ def update_selected_rows(id, data):
 
 @app.callback(
     Output('selected-network-nodes', 'data'),
+    Output('interaction-with-table-count', 'data'),
+    Output('network-clear-all-selected-genes', 'style'),
     Input({'type': 'net-node-table-tr', 'index': ALL}, 'n_clicks'),
     Input({'type': 'remove-selected-network-nodes', 'index': ALL}, 'n_clicks'),
     State('selected-network-nodes', 'data'),
-    Input('network-species-dropdown', 'value'), )
-def update_selected_rows(row_n_clicks, sel_n_clicks, data, species):
+    Input('network-species-dropdown', 'value'), 
+    Input('network-nodes-table', 'children'),
+    State('interaction-with-table-count', 'data'),
+    Input('network-clear-all-selected-genes', 'n_clicks'))
+def update_selected_rows(row_n_clicks, sel_n_clicks, data, species, on_screen_table, interaction_count, clear_all):
 
+    print(ctx.triggered[0]['prop_id'])
     if ctx.triggered[0]['prop_id'] == '.':
+        print('cond 1')
+        print(row_n_clicks)
         raise PreventUpdate
 
+
+    if ctx.triggered[0]['prop_id'] == 'network-nodes-table.children' and interaction_count == 0:
+        if data == [0]:
+            raise PreventUpdate
+        return [0], interaction_count, {'display': 'none'}
+
     if ctx.triggered[0]['prop_id'] == 'network-species-dropdown.value':
-        return []
+        print('cond 2')
+        if data == [0]:
+            raise PreventUpdate
+        return [0], interaction_count, {'display': 'none'}
+
+    if ctx.triggered[0]['prop_id'] == 'network-clear-all-selected-genes.n_clicks':
+        return [], interaction_count, {'display': 'none'}
 
     if len(ctx.triggered) == 1:
+        print('cond 3')
+        # print(ctx.triggered)
+        # print(len(ctx.triggered))
         id_str = ctx.triggered[0]['prop_id'].split('.')[0]
         id = json.loads(id_str)
         index = id['index']
 
     else:
+        print('cond 3 else')
+        # print(ctx.triggered)
+        # print(len(ctx.triggered))
         raise PreventUpdate
 
     if index < 0:
+        print('cond 4')
         raise PreventUpdate
 
     if index not in data:
+        print('cond 5')
         data.append(index)
+        interaction_count += 1
     else:
+        print('cond 5 else')
         data.remove(index)
+        interaction_count += 1
 
-    return data
+    if len(data) > 1:
+        clear_all_style = {'display': 'block'}
+    else:
+        clear_all_style = {'display': 'none'}
+
+    return data, interaction_count, clear_all_style
 
 
 @app.callback(
@@ -341,3 +380,4 @@ def toggle_collapse(n, is_open):
     if n:
         return not is_open
     return is_open
+

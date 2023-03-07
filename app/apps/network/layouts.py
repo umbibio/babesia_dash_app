@@ -13,7 +13,7 @@ from apps.network.common import table_columns, phase_abbrv, phase_names, phase_c
 
 menu = [
     html.Br(),
-    dbc.Label("Species", html_for='network-species-dropdown'),
+    dbc.Label("Select Species:", html_for='network-species-dropdown'),
     dbc.Select(id='network-species-dropdown',
         options=[{'label':fn, 'value':sn} for sn, fn in species_names.items() if sn != 'bmic'],
         value=species_keys[0]),
@@ -34,6 +34,7 @@ menu = [
 
     ], hover=False),
     dbc.Table(id='selected-nodes-table', hover=False),
+    dbc.Button('clear all', id='network-clear-all-selected-genes', color='link', style={'display': 'none'}),
 ]
 
 
@@ -86,6 +87,7 @@ filter_inputs = {
 }
 
 body = [
+    dcc.Store(id='interaction-with-table-count', data=0),
     dcc.Store(id='dummy-store-1'),
     dcc.Store(id='dummy-store-2'),
     dcc.Store(id='dummy-store-3'),
@@ -184,7 +186,10 @@ body = [
     id='graph-settings-collapse', is_open=False,),
     dbc.Row([dbc.Col([
         dbc.Card([
-            dbc.CardHeader(html.H4('Genes in network')),
+            dbc.CardHeader([
+                html.H4('Genes in network'),
+                html.Small('select or deselect a gene by clicking on a row in the table bellow'),
+            ]),
             dbc.CardBody([
                 dbc.Row(dbc.Col(
                     dbc.Table([
