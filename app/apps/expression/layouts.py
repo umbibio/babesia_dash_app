@@ -8,7 +8,8 @@ import dash_bootstrap_components as dbc
 from data import species_names, species_keys
 
 menu = [
-    dbc.Label("Species", html_for='species-dropdown'),
+    html.Br(),
+    dbc.Label("Select Species:", html_for='species-dropdown'),
     dbc.Select(id='species-dropdown',
         options=[{'label':fn, 'value':sn} for sn, fn in species_names.items()],
         value=species_keys[0]),
@@ -29,9 +30,13 @@ menu = [
         value='2D',
         inline=True),
     html.Br(),
-    html.Div(id='gene-dropdown-container', children=[
-        dbc.Label("Gene", html_for='species-dropdown'),
-        dcc.Dropdown(id='gene-dropdown', options=[], placeholder='Search...'),
+    html.Div(id='expression-gene-dropdown-container', children=[
+        dbc.Label([
+            "Select Gene:",
+            dbc.Button("Example", id='expression-gene-example-button', size='sm', color='primary', outline=True),
+        ], html_for='expression-gene-dropdown', style={'display': 'flex', 'justify-content': 'space-between'}),
+        dcc.Dropdown(id='expression-gene-dropdown', options=[], placeholder='Search...'),
+        
     ], style={'display': 'none'}),
 ]
 

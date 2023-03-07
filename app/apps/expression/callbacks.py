@@ -10,8 +10,8 @@ from app import app, db
 
 
 @app.callback(
-    Output('gene-dropdown', 'options'),
-    Output('gene-dropdown-container', 'style'),
+    Output('expression-gene-dropdown', 'options'),
+    Output('expression-gene-dropdown-container', 'style'),
     Input('species-dropdown', 'value'),)
 def update_gene_dropdown(species):
     if not species:
@@ -45,7 +45,7 @@ def update_2d3d_visibility(dimred):
 @app.callback(
     Output('expression-graph', 'figure'),
     Input('species-dropdown', 'value'),
-    Input('gene-dropdown', 'value'),
+    Input('expression-gene-dropdown', 'value'),
     Input('dimred-radio', 'value'),
     Input('2d3d-radio', 'value'),
     )
@@ -147,4 +147,24 @@ def draw_expression_plot(species, gene_id, dimred, pca_nd):
 
     fig.update_layout({ 'yaxis': { 'scaleanchor': 'x' }, 'height': 700})
     return fig
+
+
+app.clientside_callback(
+    """
+    function update_gene_dropdown_value(n_clicks, species) {
+        if(dash_clientside.callback_context.triggered.length == 0) return;
+        prop_id = dash_clientside.callback_context.triggered[0].prop_id
+
+        if(prop_id !== 'expression-gene-example-button.n_clicks') return;
+        if(species == 'bbig') return 'BBBOND_0103330';
+        if(species == 'bbov') return 'BBOV_I001860';
+        if(species == 'bdiv_human') return 'Bdiv_002840c';
+        if(species == 'bdiv_cow') return 'Bdiv_002840c';
+        if(species == 'bmic') return 'BMR1_01G01876';
+    }
+    """,
+    Output("expression-gene-dropdown", 'value'),
+    Input("expression-gene-example-button", "n_clicks"),
+    Input("species-dropdown", "value"),
+)
 
