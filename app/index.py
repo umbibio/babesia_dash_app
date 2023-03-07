@@ -32,13 +32,13 @@ app.layout = dbc.Container(
     dbc.Row([
         dcc.Location(id='url', refresh=False),
         dbc.Col([
-            dbc.Row(dbc.Col(logo)),
+            dbc.Row(dbc.Col(logo, width=8)),
             dbc.Row(dbc.Col(id='left-menu')),
-        ], width=2),
+        ], width=3),
         dbc.Col([
             dbc.Row(dbc.Col(nav), class_name="p-2"),
             dbc.Row(dbc.Col(id='page-content')),
-        ], width=10),
+        ], width=9),
     ])
 )
 
