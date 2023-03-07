@@ -18,12 +18,18 @@ ids_intersection.sort()
 del(ids_set_list)
 
 menu = [
-    dbc.Label("Gene", html_for='species-dropdown'),
+    html.Br(),
+    # dbc.Label("Select Gene:", html_for='pstime-gene-dropdown'),
+    dbc.Label([
+        "Select Gene:",
+        dbc.Button("Example", id='pstime-gene-example-button', size='sm', color='primary', outline=True),
+    ], html_for='pstime-gene-dropdown', style={'display': 'flex', 'justify-content': 'space-between'}),
     dcc.Dropdown(
-        id='gene-dropdown',
+        id='pstime-gene-dropdown',
         options=[{'label': g, 'value': g} for g in ids_intersection],
         value=None,
         placeholder='Search...'),
+    # dbc.Button(['click for example'], id='pstime-gene-example-button', size='sm', color='link'),
 ]
 
 
@@ -42,14 +48,14 @@ body = [
                             id={'type': 'pstime-expr-graph', 'key': key},
                             figure=make_sc_plot(key), animate=False),
                     ], id=f'loading-pstime-expr-graph-{key}', type='border', fullscreen=False, color='primary', delay_hide=100,),
-                ], width=5),
+                ], width=6),
                 dbc.Col([
                     dbc.Spinner([
                         dcc.Graph(
                             id={'type': 'pstime-expr-time-curve', 'key': key},
                             figure={'layout': { 'height': 450, "xaxis": { "visible": 'false' }, "yaxis": { "visible": 'false' }, } },),
                     ], id=f'loading-pstime-expr-time-curve-{key}', type='border', fullscreen=False, color='primary', delay_hide=100,),
-                ], width=7),
+                ], width=6),
             ])),
         ])), class_name="mb-4")
         for key in species_keys if key != 'bmic'

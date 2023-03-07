@@ -31,14 +31,14 @@ from apps.pstime.common import species_data, make_sc_plot
     # Output({'type': 'pstime-expr-graph-figure-data', 'key': MATCH}, 'data'),
     # Output({'type': 'pstime-expr-graph-figure-layout', 'key': MATCH}, 'data'),
     Output({'type': 'pstime-expr-graph', 'key': MATCH}, 'figure'),
-    Input('gene-dropdown', 'value'),
+    Input('pstime-gene-dropdown', 'value'),
     State({'type': 'pstime-expr-graph', 'key': MATCH}, 'id'),
     # State({'type': 'mata-data-orth-genes', 'key': MATCH}, 'data'),
     )
 def update_expression_plots(gene_id, id):
     species = id['key']
 
-    if ctx.triggered and ctx.triggered[0]['prop_id'] == 'gene-dropdown.value':
+    if ctx.triggered and ctx.triggered[0]['prop_id'] == 'pstime-gene-dropdown.value':
 
         fig = make_sc_plot(species, phase_visible='legendonly' if gene_id else True)
     
@@ -110,7 +110,7 @@ def update_expression_plots(gene_id, id):
 
 @app.callback(
     Output({'type': 'pstime-expr-time-curve', 'key': MATCH}, 'figure'),
-    Input('gene-dropdown', 'value'),
+    Input('pstime-gene-dropdown', 'value'),
     State({'type': 'pstime-expr-time-curve', 'key': MATCH}, 'id'), )
 def update_time_curve_plots(gene_id, id):
     species = id['key']
@@ -179,4 +179,20 @@ def update_time_curve_plots(gene_id, id):
         ]})
 
     return fig
+
+
+app.clientside_callback(
+    """
+    function update_pstime_gene_dropdown_value(n_clicks) {
+        if(dash_clientside.callback_context.triggered.length == 0) return;
+        prop_id = dash_clientside.callback_context.triggered[0].prop_id
+
+        if(prop_id !== 'pstime-gene-example-button.n_clicks') return;
+
+        return 'Bdiv_000760c';
+    }
+    """,
+    Output("pstime-gene-dropdown", 'value'),
+    Input("pstime-gene-example-button", "n_clicks"),
+)
 
